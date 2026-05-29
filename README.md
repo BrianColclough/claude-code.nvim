@@ -42,17 +42,16 @@ vim.g.claude_theme = {
   transparent = false,           -- make the main editor background transparent
   transparent_float = false,     -- make floating windows and completion menus transparent
   transparent_telescope = true,  -- make Telescope panels transparent
+  completion_blend = 8,          -- blend autocomplete popup backgrounds
 }
 
 vim.o.background = "dark" -- or "light"
 vim.cmd.colorscheme("claude")
 ```
 
-For a blurred or glassy effect, pair the transparent highlights with Neovim or plugin blend settings:
+For a blurred or glassy Telescope effect, pair the transparent highlights with plugin blend settings:
 
 ```lua
-vim.o.pumblend = 8
-
 require("telescope").setup({
   defaults = {
     winblend = 10,
@@ -60,4 +59,4 @@ require("telescope").setup({
 })
 ```
 
-Neovim highlights can make float backgrounds transparent and blendable, but true blur depends on your terminal or GUI.
+`completion_blend` uses Neovim's popup-menu blending for autocomplete menus. Neovim highlights can make float backgrounds transparent and blendable, but true blur depends on your terminal or GUI.
