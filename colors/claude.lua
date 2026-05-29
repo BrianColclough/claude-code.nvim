@@ -60,14 +60,43 @@ local palettes = {
 -- ---------------------------------------------------------------------------
 -- Highlight specification
 -- ---------------------------------------------------------------------------
-local function highlights(c)
+local function normalize_config(opts)
+  opts = (type(opts) == "table") and opts or {}
+
+  local globals = vim.g.claude_theme
+  globals = (type(globals) == "table") and globals or {}
+
+  return {
+    transparent = opts.transparent == true
+      or globals.transparent == true
+      or vim.g.claude_transparent == true,
+    transparent_float = opts.transparent_float == true
+      or globals.transparent_float == true
+      or vim.g.claude_transparent_float == true,
+    transparent_telescope = opts.transparent_telescope == true
+      or globals.transparent_telescope == true
+      or vim.g.claude_transparent_telescope == true,
+  }
+end
+
+local function highlights(c, config)
+  local transparent = config.transparent
+  local transparent_float = transparent or config.transparent_float
+  local transparent_telescope = transparent_float or config.transparent_telescope
+
+  local bg = transparent and c.none or c.bg
+  local bg_float = transparent_float and c.none or c.bg_float
+  local bg_telescope = transparent_telescope and c.none or c.bg_float
+  local bg_telescope_prompt = transparent_telescope and c.none or c.bg_hl
+  local bg_telescope_title = transparent_telescope and c.none or c.bg_float
+
   return {
     -- Editor UI ------------------------------------------------------------
-    Normal          = { fg = c.fg, bg = c.bg },
-    NormalNC        = { fg = c.fg, bg = c.bg },
-    NormalFloat     = { fg = c.fg, bg = c.bg_float },
-    FloatBorder     = { fg = c.border_br, bg = c.bg_float },
-    FloatTitle      = { fg = c.accent, bg = c.bg_float, bold = true },
+    Normal          = { fg = c.fg, bg = bg },
+    NormalNC        = { fg = c.fg, bg = bg },
+    NormalFloat     = { fg = c.fg, bg = bg_float },
+    FloatBorder     = { fg = c.border_br, bg = bg_float },
+    FloatTitle      = { fg = c.accent, bg = bg_float, bold = true },
     ColorColumn     = { bg = c.bg_dim },
     Cursor          = { fg = c.bg, bg = c.accent },
     lCursor         = { fg = c.bg, bg = c.accent },
@@ -112,12 +141,16 @@ local function highlights(c)
     WinBarNC        = { fg = c.fg_muted, bg = c.none },
 
     -- Popup menu -----------------------------------------------------------
-    Pmenu           = { fg = c.fg_dim, bg = c.bg_float },
+    Pmenu           = { fg = c.fg_dim, bg = bg_float },
     PmenuSel        = { fg = c.fg, bg = c.accent_soft, bold = true },
-    PmenuSbar       = { bg = c.bg_float },
+    PmenuSbar       = { bg = bg_float },
     PmenuThumb      = { bg = c.border_br },
-    PmenuKind       = { fg = c.type, bg = c.bg_float },
-    PmenuExtra      = { fg = c.fg_muted, bg = c.bg_float },
+    PmenuKind       = { fg = c.type, bg = bg_float },
+    PmenuKindSel    = { fg = c.type, bg = c.accent_soft, bold = true },
+    PmenuExtra      = { fg = c.fg_muted, bg = bg_float },
+    PmenuExtraSel   = { fg = c.fg_dim, bg = c.accent_soft },
+    PmenuMatch      = { fg = c.accent, bg = bg_float, bold = true },
+    PmenuMatchSel   = { fg = c.accent, bg = c.accent_soft, bold = true },
     WildMenu        = { fg = c.bg, bg = c.accent },
 
     -- Syntax (legacy) ------------------------------------------------------
@@ -343,14 +376,22 @@ local function highlights(c)
     GitSignsDelete  = { fg = c.delete },
 
     -- Telescope ------------------------------------------------------------
-    TelescopeNormal       = { fg = c.fg_dim, bg = c.bg_float },
-    TelescopeBorder       = { fg = c.border_br, bg = c.bg_float },
-    TelescopePromptNormal = { fg = c.fg, bg = c.bg_hl },
-    TelescopePromptBorder = { fg = c.bg_hl, bg = c.bg_hl },
+    TelescopeNormal       = { fg = c.fg_dim, bg = bg_telescope },
+    TelescopeBorder       = { fg = c.border_br, bg = bg_telescope },
+    TelescopePromptNormal = { fg = c.fg, bg = bg_telescope_prompt },
+    TelescopePromptBorder = { fg = c.border_br, bg = bg_telescope_prompt },
     TelescopePromptTitle  = { fg = c.bg, bg = c.accent, bold = true },
-    TelescopeResultsTitle = { fg = c.bg_float, bg = c.bg_float },
+    TelescopePromptPrefix = { fg = c.accent, bg = bg_telescope_prompt },
+    TelescopePromptCounter = { fg = c.fg_muted, bg = bg_telescope_prompt },
+    TelescopeResultsNormal = { fg = c.fg_dim, bg = bg_telescope },
+    TelescopeResultsBorder = { fg = c.border_br, bg = bg_telescope },
+    TelescopeResultsTitle = { fg = c.fg_muted, bg = bg_telescope_title },
+    TelescopePreviewNormal = { fg = c.fg_dim, bg = bg_telescope },
+    TelescopePreviewBorder = { fg = c.border_br, bg = bg_telescope },
     TelescopePreviewTitle = { fg = c.bg, bg = c.success, bold = true },
-    TelescopeSelection    = { bg = c.accent_soft, bold = true },
+    TelescopeSelection    = { fg = c.fg, bg = c.accent_soft, bold = true },
+    TelescopeSelectionCaret = { fg = c.accent, bg = c.accent_soft, bold = true },
+    TelescopeMultiSelection = { fg = c.accent, bg = c.accent_soft },
     TelescopeMatching     = { fg = c.accent, bold = true },
 
     -- nvim-tree / neo-tree -------------------------------------------------
@@ -367,14 +408,79 @@ local function highlights(c)
     NeoTreeRootName       = { fg = c.accent, bold = true },
 
     -- nvim-cmp -------------------------------------------------------------
-    CmpItemAbbr           = { fg = c.fg_dim },
-    CmpItemAbbrMatch      = { fg = c.accent, bold = true },
-    CmpItemAbbrMatchFuzzy = { fg = c.accent },
-    CmpItemKindFunction   = { fg = c.func },
-    CmpItemKindVariable   = { fg = c.variable },
-    CmpItemKindKeyword    = { fg = c.keyword },
-    CmpItemKindClass      = { fg = c.type },
-    CmpItemKindSnippet    = { fg = c.constant },
+    CmpDocumentation        = { link = "NormalFloat" },
+    CmpDocumentationBorder  = { link = "FloatBorder" },
+    CmpItemAbbr             = { fg = c.fg_dim },
+    CmpItemAbbrDeprecated   = { fg = c.fg_muted, strikethrough = true },
+    CmpItemAbbrMatch        = { fg = c.accent, bold = true },
+    CmpItemAbbrMatchFuzzy   = { fg = c.accent },
+    CmpItemMenu             = { fg = c.fg_muted },
+    CmpItemKind             = { fg = c.type },
+    CmpItemKindText         = { fg = c.fg_dim },
+    CmpItemKindMethod       = { fg = c.func },
+    CmpItemKindFunction     = { fg = c.func },
+    CmpItemKindConstructor  = { fg = c.type },
+    CmpItemKindField        = { fg = c.property },
+    CmpItemKindVariable     = { fg = c.variable },
+    CmpItemKindClass        = { fg = c.type },
+    CmpItemKindInterface    = { fg = c.type },
+    CmpItemKindModule       = { fg = c.type },
+    CmpItemKindProperty     = { fg = c.property },
+    CmpItemKindUnit         = { fg = c.constant },
+    CmpItemKindValue        = { fg = c.constant },
+    CmpItemKindEnum         = { fg = c.type },
+    CmpItemKindKeyword      = { fg = c.keyword },
+    CmpItemKindSnippet      = { fg = c.constant },
+    CmpItemKindColor        = { fg = c.escape },
+    CmpItemKindFile         = { fg = c.info },
+    CmpItemKindReference    = { fg = c.variable },
+    CmpItemKindFolder       = { fg = c.info },
+    CmpItemKindEnumMember   = { fg = c.constant },
+    CmpItemKindConstant     = { fg = c.constant },
+    CmpItemKindStruct       = { fg = c.type },
+    CmpItemKindEvent        = { fg = c.func },
+    CmpItemKindOperator     = { fg = c.operator },
+    CmpItemKindTypeParameter = { fg = c.type },
+
+    -- blink.cmp ------------------------------------------------------------
+    BlinkCmpMenu              = { link = "Pmenu" },
+    BlinkCmpMenuBorder        = { link = "FloatBorder" },
+    BlinkCmpMenuSelection     = { link = "PmenuSel" },
+    BlinkCmpScrollBarThumb    = { link = "PmenuThumb" },
+    BlinkCmpScrollBarGutter   = { link = "PmenuSbar" },
+    BlinkCmpLabel             = { fg = c.fg_dim },
+    BlinkCmpLabelDeprecated   = { fg = c.fg_muted, strikethrough = true },
+    BlinkCmpLabelMatch        = { fg = c.accent, bold = true },
+    BlinkCmpKind              = { fg = c.type },
+    BlinkCmpKindText          = { link = "CmpItemKindText" },
+    BlinkCmpKindMethod        = { link = "CmpItemKindMethod" },
+    BlinkCmpKindFunction      = { link = "CmpItemKindFunction" },
+    BlinkCmpKindConstructor   = { link = "CmpItemKindConstructor" },
+    BlinkCmpKindField         = { link = "CmpItemKindField" },
+    BlinkCmpKindVariable      = { link = "CmpItemKindVariable" },
+    BlinkCmpKindClass         = { link = "CmpItemKindClass" },
+    BlinkCmpKindInterface     = { link = "CmpItemKindInterface" },
+    BlinkCmpKindModule        = { link = "CmpItemKindModule" },
+    BlinkCmpKindProperty      = { link = "CmpItemKindProperty" },
+    BlinkCmpKindUnit          = { link = "CmpItemKindUnit" },
+    BlinkCmpKindValue         = { link = "CmpItemKindValue" },
+    BlinkCmpKindEnum          = { link = "CmpItemKindEnum" },
+    BlinkCmpKindKeyword       = { link = "CmpItemKindKeyword" },
+    BlinkCmpKindSnippet       = { link = "CmpItemKindSnippet" },
+    BlinkCmpKindColor         = { link = "CmpItemKindColor" },
+    BlinkCmpKindFile          = { link = "CmpItemKindFile" },
+    BlinkCmpKindReference     = { link = "CmpItemKindReference" },
+    BlinkCmpKindFolder        = { link = "CmpItemKindFolder" },
+    BlinkCmpKindEnumMember    = { link = "CmpItemKindEnumMember" },
+    BlinkCmpKindConstant      = { link = "CmpItemKindConstant" },
+    BlinkCmpKindStruct        = { link = "CmpItemKindStruct" },
+    BlinkCmpKindEvent         = { link = "CmpItemKindEvent" },
+    BlinkCmpKindOperator      = { link = "CmpItemKindOperator" },
+    BlinkCmpKindTypeParameter = { link = "CmpItemKindTypeParameter" },
+    BlinkCmpDoc               = { link = "NormalFloat" },
+    BlinkCmpDocBorder         = { link = "FloatBorder" },
+    BlinkCmpSignatureHelp     = { link = "NormalFloat" },
+    BlinkCmpSignatureHelpBorder = { link = "FloatBorder" },
 
     -- Indent guides --------------------------------------------------------
     IndentBlanklineChar       = { fg = c.fg_faint },
@@ -392,16 +498,17 @@ end
 -- ---------------------------------------------------------------------------
 -- Loader
 -- ---------------------------------------------------------------------------
-function M.setup()
+function M.setup(opts)
   local bg = (vim.o.background == "light") and "light" or "dark"
   local c = palettes[bg]
+  local config = normalize_config(opts)
 
   vim.cmd("hi clear")
   if vim.fn.exists("syntax_on") then vim.cmd("syntax reset") end
   vim.o.termguicolors = true
   vim.g.colors_name = "claude"
 
-  for group, spec in pairs(highlights(c)) do
+  for group, spec in pairs(highlights(c, config)) do
     vim.api.nvim_set_hl(0, group, spec)
   end
 

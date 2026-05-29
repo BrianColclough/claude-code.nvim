@@ -31,4 +31,33 @@ vim.cmd.colorscheme("claude")
 
 ## Notes
 
-The theme sets Neovim terminal colors and includes highlights for core UI, Treesitter, LSP semantic tokens, diagnostics, Telescope, nvim-cmp, gitsigns, and common file tree plugins.
+The theme sets Neovim terminal colors and includes highlights for core UI, Treesitter, LSP semantic tokens, diagnostics, Telescope, nvim-cmp, blink.cmp, gitsigns, and common file tree plugins.
+
+## Options
+
+Set options before loading the colorscheme:
+
+```lua
+vim.g.claude_theme = {
+  transparent = false,           -- make the main editor background transparent
+  transparent_float = false,     -- make floating windows and completion menus transparent
+  transparent_telescope = true,  -- make Telescope panels transparent
+}
+
+vim.o.background = "dark" -- or "light"
+vim.cmd.colorscheme("claude")
+```
+
+For a blurred or glassy effect, pair the transparent highlights with Neovim or plugin blend settings:
+
+```lua
+vim.o.pumblend = 8
+
+require("telescope").setup({
+  defaults = {
+    winblend = 10,
+  },
+})
+```
+
+Neovim highlights can make float backgrounds transparent and blendable, but true blur depends on your terminal or GUI.
