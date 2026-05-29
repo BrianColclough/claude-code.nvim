@@ -60,35 +60,11 @@ local palettes = {
 -- ---------------------------------------------------------------------------
 -- Highlight specification
 -- ---------------------------------------------------------------------------
-local function normalize_blend(value)
-  value = tonumber(value)
-  if value == nil then return nil end
-
-  return math.max(0, math.min(100, math.floor(value)))
-end
-
-local function with_blend(spec, blend)
-  if blend == nil then return spec end
-
-  local blended = {}
-  for key, value in pairs(spec) do
-    blended[key] = value
-  end
-  blended.blend = blend
-
-  return blended
-end
-
 local function normalize_config(opts)
   opts = (type(opts) == "table") and opts or {}
 
   local globals = vim.g.claude_theme
   globals = (type(globals) == "table") and globals or {}
-  local completion_blend = opts.completion_blend
-    or opts.autocomplete_blend
-    or globals.completion_blend
-    or globals.autocomplete_blend
-    or vim.g.claude_completion_blend
 
   return {
     transparent = opts.transparent == true
@@ -100,7 +76,6 @@ local function normalize_config(opts)
     transparent_telescope = opts.transparent_telescope == true
       or globals.transparent_telescope == true
       or vim.g.claude_transparent_telescope == true,
-    completion_blend = normalize_blend(completion_blend),
   }
 end
 
@@ -108,11 +83,9 @@ local function highlights(c, config)
   local transparent = config.transparent
   local transparent_float = transparent or config.transparent_float
   local transparent_telescope = transparent_float or config.transparent_telescope
-  local completion_blend = config.completion_blend
 
   local bg = transparent and c.none or c.bg
   local bg_float = transparent_float and c.none or c.bg_float
-  local bg_completion = completion_blend and c.bg_float or bg_float
   local bg_telescope = transparent_telescope and c.none or c.bg_float
   local bg_telescope_prompt = transparent_telescope and c.none or c.bg_hl
   local bg_telescope_title = transparent_telescope and c.none or c.bg_float
@@ -168,16 +141,16 @@ local function highlights(c, config)
     WinBarNC        = { fg = c.fg_muted, bg = c.none },
 
     -- Popup menu -----------------------------------------------------------
-    Pmenu           = with_blend({ fg = c.fg_dim, bg = bg_completion }, completion_blend),
-    PmenuSel        = with_blend({ fg = c.fg, bg = c.accent_soft, bold = true }, completion_blend),
-    PmenuSbar       = with_blend({ bg = bg_completion }, completion_blend),
-    PmenuThumb      = with_blend({ bg = c.border_br }, completion_blend),
-    PmenuKind       = with_blend({ fg = c.type, bg = bg_completion }, completion_blend),
-    PmenuKindSel    = with_blend({ fg = c.type, bg = c.accent_soft, bold = true }, completion_blend),
-    PmenuExtra      = with_blend({ fg = c.fg_muted, bg = bg_completion }, completion_blend),
-    PmenuExtraSel   = with_blend({ fg = c.fg_dim, bg = c.accent_soft }, completion_blend),
-    PmenuMatch      = with_blend({ fg = c.accent, bg = bg_completion, bold = true }, completion_blend),
-    PmenuMatchSel   = with_blend({ fg = c.accent, bg = c.accent_soft, bold = true }, completion_blend),
+    Pmenu           = { fg = c.fg_dim, bg = bg_float },
+    PmenuSel        = { fg = c.fg, bg = c.accent_soft, bold = true },
+    PmenuSbar       = { bg = bg_float },
+    PmenuThumb      = { bg = c.border_br },
+    PmenuKind       = { fg = c.type, bg = bg_float },
+    PmenuKindSel    = { fg = c.type, bg = c.accent_soft, bold = true },
+    PmenuExtra      = { fg = c.fg_muted, bg = bg_float },
+    PmenuExtraSel   = { fg = c.fg_dim, bg = c.accent_soft },
+    PmenuMatch      = { fg = c.accent, bg = bg_float, bold = true },
+    PmenuMatchSel   = { fg = c.accent, bg = c.accent_soft, bold = true },
     WildMenu        = { fg = c.bg, bg = c.accent },
 
     -- Syntax (legacy) ------------------------------------------------------
@@ -435,12 +408,8 @@ local function highlights(c, config)
     NeoTreeRootName       = { fg = c.accent, bold = true },
 
     -- nvim-cmp -------------------------------------------------------------
-    CmpDocumentation        = completion_blend
-      and with_blend({ fg = c.fg, bg = bg_completion }, completion_blend)
-      or { link = "NormalFloat" },
-    CmpDocumentationBorder  = completion_blend
-      and with_blend({ fg = c.border_br, bg = bg_completion }, completion_blend)
-      or { link = "FloatBorder" },
+    CmpDocumentation        = { link = "NormalFloat" },
+    CmpDocumentationBorder  = { link = "FloatBorder" },
     CmpItemAbbr             = { fg = c.fg_dim },
     CmpItemAbbrDeprecated   = { fg = c.fg_muted, strikethrough = true },
     CmpItemAbbrMatch        = { fg = c.accent, bold = true },
@@ -508,8 +477,8 @@ local function highlights(c, config)
     BlinkCmpKindEvent         = { link = "CmpItemKindEvent" },
     BlinkCmpKindOperator      = { link = "CmpItemKindOperator" },
     BlinkCmpKindTypeParameter = { link = "CmpItemKindTypeParameter" },
-    BlinkCmpDoc               = { link = "CmpDocumentation" },
-    BlinkCmpDocBorder         = { link = "CmpDocumentationBorder" },
+    BlinkCmpDoc               = { link = "NormalFloat" },
+    BlinkCmpDocBorder         = { link = "FloatBorder" },
     BlinkCmpSignatureHelp     = { link = "NormalFloat" },
     BlinkCmpSignatureHelpBorder = { link = "FloatBorder" },
 
@@ -537,9 +506,6 @@ function M.setup(opts)
   vim.cmd("hi clear")
   if vim.fn.exists("syntax_on") then vim.cmd("syntax reset") end
   vim.o.termguicolors = true
-  if config.completion_blend ~= nil then
-    vim.o.pumblend = config.completion_blend
-  end
   vim.g.colors_name = "claude"
 
   for group, spec in pairs(highlights(c, config)) do
