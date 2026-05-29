@@ -86,6 +86,7 @@ local function highlights(c, config)
 
   local bg = transparent and c.none or c.bg
   local bg_float = transparent_float and c.none or c.bg_float
+  local bg_completion = c.bg
   local bg_telescope = transparent_telescope and c.none or c.bg_float
   local bg_telescope_prompt = transparent_telescope and c.none or c.bg_hl
   local bg_telescope_title = transparent_telescope and c.none or c.bg_float
@@ -141,15 +142,15 @@ local function highlights(c, config)
     WinBarNC        = { fg = c.fg_muted, bg = c.none },
 
     -- Popup menu -----------------------------------------------------------
-    Pmenu           = { fg = c.fg_dim, bg = bg_float },
+    Pmenu           = { fg = c.fg_dim, bg = bg_completion },
     PmenuSel        = { fg = c.fg, bg = c.accent_soft, bold = true },
-    PmenuSbar       = { bg = bg_float },
+    PmenuSbar       = { bg = bg_completion },
     PmenuThumb      = { bg = c.border_br },
-    PmenuKind       = { fg = c.type, bg = bg_float },
+    PmenuKind       = { fg = c.type, bg = bg_completion },
     PmenuKindSel    = { fg = c.type, bg = c.accent_soft, bold = true },
-    PmenuExtra      = { fg = c.fg_muted, bg = bg_float },
+    PmenuExtra      = { fg = c.fg_muted, bg = bg_completion },
     PmenuExtraSel   = { fg = c.fg_dim, bg = c.accent_soft },
-    PmenuMatch      = { fg = c.accent, bg = bg_float, bold = true },
+    PmenuMatch      = { fg = c.accent, bg = bg_completion, bold = true },
     PmenuMatchSel   = { fg = c.accent, bg = c.accent_soft, bold = true },
     WildMenu        = { fg = c.bg, bg = c.accent },
 
@@ -408,8 +409,8 @@ local function highlights(c, config)
     NeoTreeRootName       = { fg = c.accent, bold = true },
 
     -- nvim-cmp -------------------------------------------------------------
-    CmpDocumentation        = { link = "NormalFloat" },
-    CmpDocumentationBorder  = { link = "FloatBorder" },
+    CmpDocumentation        = { fg = c.fg, bg = bg_completion },
+    CmpDocumentationBorder  = { fg = c.border_br, bg = bg_completion },
     CmpItemAbbr             = { fg = c.fg_dim },
     CmpItemAbbrDeprecated   = { fg = c.fg_muted, strikethrough = true },
     CmpItemAbbrMatch        = { fg = c.accent, bold = true },
@@ -444,7 +445,7 @@ local function highlights(c, config)
 
     -- blink.cmp ------------------------------------------------------------
     BlinkCmpMenu              = { link = "Pmenu" },
-    BlinkCmpMenuBorder        = { link = "FloatBorder" },
+    BlinkCmpMenuBorder        = { fg = c.border_br, bg = bg_completion },
     BlinkCmpMenuSelection     = { link = "PmenuSel" },
     BlinkCmpScrollBarThumb    = { link = "PmenuThumb" },
     BlinkCmpScrollBarGutter   = { link = "PmenuSbar" },
@@ -477,8 +478,8 @@ local function highlights(c, config)
     BlinkCmpKindEvent         = { link = "CmpItemKindEvent" },
     BlinkCmpKindOperator      = { link = "CmpItemKindOperator" },
     BlinkCmpKindTypeParameter = { link = "CmpItemKindTypeParameter" },
-    BlinkCmpDoc               = { link = "NormalFloat" },
-    BlinkCmpDocBorder         = { link = "FloatBorder" },
+    BlinkCmpDoc               = { link = "CmpDocumentation" },
+    BlinkCmpDocBorder         = { link = "CmpDocumentationBorder" },
     BlinkCmpSignatureHelp     = { link = "NormalFloat" },
     BlinkCmpSignatureHelpBorder = { link = "FloatBorder" },
 

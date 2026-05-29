@@ -48,16 +48,4 @@ vim.o.background = "dark" -- or "light"
 vim.cmd.colorscheme("claude")
 ```
 
-For a blurred or glassy effect, pair the transparent highlights with Neovim or plugin blend settings:
-
-```lua
-vim.o.pumblend = 8
-
-require("telescope").setup({
-  defaults = {
-    winblend = 10,
-  },
-})
-```
-
-Neovim highlights can make float backgrounds transparent and blendable, but true blur depends on your terminal or GUI.
+Completion menus and completion documentation use the editor background color, so they stay readable even when floating windows are transparent.
