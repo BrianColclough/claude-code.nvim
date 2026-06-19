@@ -60,6 +60,20 @@ local palettes = {
 -- ---------------------------------------------------------------------------
 -- Highlight specification
 -- ---------------------------------------------------------------------------
+-- Resolve a tri-state boolean option: return the first explicit boolean found
+-- across the option sources, or nil when unset so callers can apply an
+-- inherited default.
+local function resolve_bool(...)
+  local values = { ... }
+  for i = 1, select("#", ...) do
+    if type(values[i]) == "boolean" then
+      return values[i]
+    end
+  end
+
+  return nil
+end
+
 local function normalize_config(opts)
   opts = (type(opts) == "table") and opts or {}
 
@@ -67,22 +81,23 @@ local function normalize_config(opts)
   globals = (type(globals) == "table") and globals or {}
 
   return {
-    transparent = opts.transparent == true
-      or globals.transparent == true
-      or vim.g.claude_transparent == true,
-    transparent_float = opts.transparent_float == true
-      or globals.transparent_float == true
-      or vim.g.claude_transparent_float == true,
-    transparent_telescope = opts.transparent_telescope == true
-      or globals.transparent_telescope == true
-      or vim.g.claude_transparent_telescope == true,
+    transparent = resolve_bool(opts.transparent, globals.transparent, vim.g.claude_transparent) == true,
+    -- Keep these tri-state (nil = inherit). An explicit `false` lets a
+    -- transparent main background coexist with opaque floats/telescope.
+    transparent_float = resolve_bool(opts.transparent_float, globals.transparent_float, vim.g.claude_transparent_float),
+    transparent_telescope = resolve_bool(opts.transparent_telescope, globals.transparent_telescope, vim.g.claude_transparent_telescope),
   }
 end
 
 local function highlights(c, config)
   local transparent = config.transparent
-  local transparent_float = transparent or config.transparent_float
-  local transparent_telescope = transparent_float or config.transparent_telescope
+  -- Floats inherit `transparent` unless explicitly overridden, and telescope
+  -- inherits the float setting in turn. An explicit `false` wins, so the main
+  -- background can stay transparent while popups remain opaque.
+  local transparent_float = config.transparent_float
+  if transparent_float == nil then transparent_float = transparent end
+  local transparent_telescope = config.transparent_telescope
+  if transparent_telescope == nil then transparent_telescope = transparent_float end
 
   local bg = transparent and c.none or c.bg
   local bg_float = transparent_float and c.none or c.bg_float

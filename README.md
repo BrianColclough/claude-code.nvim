@@ -40,12 +40,17 @@ Set options before loading the colorscheme:
 ```lua
 vim.g.claude_theme = {
   transparent = false,           -- make the main editor background transparent
-  transparent_float = false,     -- make floating windows and completion menus transparent
-  transparent_telescope = true,  -- make Telescope panels transparent
+  transparent_float = false,     -- floating windows: leave unset to inherit `transparent`, or force true/false
+  transparent_telescope = true,  -- Telescope panels: leave unset to inherit `transparent_float`, or force true/false
 }
 
 vim.o.background = "dark" -- or "light"
 vim.cmd.colorscheme("claude")
 ```
+
+`transparent_float` and `transparent_telescope` are tri-state: when left unset
+they inherit from `transparent` (and `transparent_float` respectively), but an
+explicit `false` keeps a transparent main background while making floats or
+Telescope panels opaque.
 
 Completion menus and completion documentation use the editor background color, so they stay readable even when floating windows are transparent.
